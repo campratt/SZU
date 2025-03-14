@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import os
 
 class TrainDataset(torch.utils.data.Dataset):
     def __init__(self, IDs, x_dir, y_dir, mask_dir=None, N_per_epoch = None, transform=None):
@@ -26,14 +27,14 @@ class TrainDataset(torch.utils.data.Dataset):
         # Get sample
         ID = self.IDs[idx]
         
-        path_x = self.x_dir + f'x_{ID}.npy'
+        path_x = os.path.join(self.x_dir, f'x_{ID}.npy')
         x = torch.from_numpy(np.load(path_x)).float()
 
-        path_y = self.y_dir + f'y_{ID}.npy'
+        path_y = os.path.join(self.y_dir, f'y_{ID}.npy')
         y = torch.from_numpy(np.load(path_y)).float().unsqueeze(0)
 
         if self.mask_dir is not None:
-            path_mask = self.mask_dir + f'mask_{ID}.npy'
+            path_mask = os.path.join(self.mask_dir, f'mask_{ID}.npy')
             mask = torch.from_numpy(np.load(path_mask)).float().unsqueeze(0)
         else:
             mask = None
@@ -69,14 +70,14 @@ class EvalDataset(torch.utils.data.Dataset):
         
         ID = self.IDs[idx]
         
-        path_x = self.x_dir + f'x_{ID}.npy'
+        path_x = os.path.join(self.x_dir, f'x_{ID}.npy')
         x = torch.from_numpy(np.load(path_x)).float()
 
         if self.y_dir is not None and self.mask_dir is not None:
-            path_y = self.y_dir + f'y_{ID}.npy'
+            path_y = os.path.join(self.y_dir, f'y_{ID}.npy')
             y = torch.from_numpy(np.load(path_y)).float().unsqueeze(0)
 
-            path_mask = self.mask_dir + f'mask_{ID}.npy'
+            path_mask = os.path.join(self.mask_dir, f'mask_{ID}.npy')
             mask = torch.from_numpy(np.load(path_mask)).float().unsqueeze(0)
         
             if self.transform is not None:
@@ -84,7 +85,7 @@ class EvalDataset(torch.utils.data.Dataset):
                 return [ID, x, y, mask]
             
         elif self.y_dir is not None:
-            path_y = self.y_dir + f'y_{ID}.npy'
+            path_y = os.path.join(self.y_dir, f'y_{ID}.npy')
             y = torch.from_numpy(np.load(path_y)).float().unsqueeze(0)
         
             if self.transform is not None:

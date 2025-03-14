@@ -3,6 +3,7 @@ from torch import nn
 import numpy as np
 import torch.nn.functional as F
 from losses import Signal_Loss
+import json
 
 
 # Train and evaluate the network for a single epoch
@@ -250,5 +251,83 @@ def train_simreal_eval_simreal(Net,
     np.mean(vars_simreal)]
 
     
+def load_config(fname):
+    with open(fname, 'r') as json_file:
+        config = json.load(json_file)
+    return config
 
+def custom_collate_fn(batch):
+    """
+    Custom collate function to handle cases where 'z' might be None.
+    """
+    # Separate x, y, and z from the batch
+    ID_batch = torch.tensor([item[0] for item in batch])
+    x_batch = [item[1] for item in batch]
+    y_batch = [item[2] for item in batch]
+    z_batch = [item[3] for item in batch]
+    
+    # Stack x and y into tensors
+    
+    x_batch = torch.stack(x_batch)
+    #y_batch = torch.stack(y_batch)
+    
+    # Handle z
+    if any(z is not None for z in z_batch):
+        # Replace None with a placeholder (e.g., a zero tensor or any appropriate default)
+        #z_batch = [torch.zeros_like(x_batch[0]) if z is None else z for z in z_batch]
+        z_batch = torch.stack(z_batch)
+    else:
+        # If all z are None, return None
+        z_batch = None
+
+    if any(y is not None for y in y_batch):
+        # Replace None with a placeholder (e.g., a zero tensor or any appropriate default)
+        #z_batch = [torch.zeros_like(x_batch[0]) if z is None else z for z in z_batch]
+        y_batch = torch.stack(y_batch)
+    else:
+        # If all z are None, return None
+        y_batch = None
+    
+    #print(x_batch.size(),y_batch.size(),z_batch.size())
+    return ID_batch, x_batch, y_batch, z_batch
+
+
+def upscale_tensors(tensor_list):
+    """
+    Upscale a list of tensors to match the shape of the first tensor in the list.
+    Handles tensors of shape BxCxTxWxH.
+    
+    Args:
+        tensor_list (list of torch.Tensor): List of tensors to be upscaled.
+    
+    Returns:
+        list of torch.Tensor: List of tensors upscaled to the shape of the first tensor.
+    """
+    # Make sure the list is not empty
+    if not tensor_list:
+        raise ValueError("The input list is empty.")
+    
+    # Get the target shape from the first tensor
+    target_tensor = tensor_list[0]
+    if len(target_tensor.shape) != 5:
+        raise ValueError("All tensors must have shape BxCxTxWxH.")
+    
+    target_shape = target_tensor.shape
+    
+    # Rescale each tensor to match the target shape
+    scaled_tensors = []
+    for tensor in tensor_list:
+        if len(tensor.shape) != 5:
+            raise ValueError(f"Tensor shape {tensor.shape} does not match the expected BxCxTxWxH format.")
+        
+        # Match the target shape using interpolation
+        scaled_tensor = F.interpolate(
+            tensor, 
+            size=target_shape[2:],  # Resize time, width, and height
+            mode='nearest',  # Use nearest neighbor interpolation
+            align_corners=None if 'linear' not in 'nearest' else True  # Avoid align_corners for non-linear modes
+        )
+        scaled_tensors.append(scaled_tensor)
+    
+    return scaled_tensors
 

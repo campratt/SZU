@@ -13,4 +13,4 @@
 source activate /home/campratt/.bashrc
 mamba activate dino
 
-python3 /home/campratt/SZU/main_sz.py --fn_config /home/campratt/SZU/config_example.json
+python3 /home/campratt/SZU/main_eval_sz.py 

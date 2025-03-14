@@ -3,7 +3,7 @@ import os
 from torch import nn
 import numpy as np
 import argparse
-from funcs import train_simreal_eval_simreal
+from funcs import train_simreal_eval_simreal, load_config, custom_collate_fn
 from datasets import TrainDataset
 from data_transforms import TransformSZ
 import wandb
@@ -21,6 +21,7 @@ os.environ['WANDB_DIR'] = '/scratch/jbregman_root/jbregman0/campratt'
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a network on SZ data')
     parser.add_argument('--fn_config', type=str, required=False, help='Path to the config file', default=None)
+    parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ')
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
     parser.add_argument('--N_sim', type=int, required=False, help='Number of all-sky simulations maps', default=100)
@@ -41,38 +42,12 @@ def parse_args():
     parser.add_argument('--N_per_epoch', type=float, required=False, help='Number of samples used for training one epoch', default=None)
     parser.add_argument('--cross_val_id', type=int, required=False, help='Number ID defining how to split the data for cross-validation', default=None)
     parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='/scratch/jbregman_root/jbregman0/campratt/SZU/model_example/')
-    parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ')
+    
 
     args = parser.parse_args()
     return args
 
-def load_config(fname):
-    with open(fname, 'r') as json_file:
-        config = json.load(json_file)
-    return config
 
-def custom_collate_fn(batch):
-    """
-    Custom collate function to handle cases where 'z' might be None.
-    """
-    # Separate x, y, and z from the batch
-    x_batch = [item[0] for item in batch]
-    y_batch = [item[1] for item in batch]
-    z_batch = [item[2] for item in batch]
-    
-    # Stack x and y into tensors
-    x_batch = torch.stack(x_batch)
-    y_batch = torch.stack(y_batch)
-    
-    # Handle z
-    if any(z is not None for z in z_batch):
-
-        z_batch = torch.stack(z_batch)
-    else:
-        # If all z are None, return None
-        z_batch = None
-    
-    return x_batch, y_batch, z_batch
     
 
 def main():
