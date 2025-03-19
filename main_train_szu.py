@@ -3,27 +3,27 @@ import os
 from torch import nn
 import numpy as np
 import argparse
-from funcs import train_simreal_eval_simreal, load_config, custom_collate_fn
-from datasets import TrainDataset
-from data_transforms import TransformSZ
+from utils.funcs import train_simreal_eval_simreal, load_config, collate_fn
+from utils.datasets import TrainDataset
+from utils.data_transforms import TransformSZ
 import wandb
-import json
-import networks
+import utils.networks
 
-#ca54b3d2066f30ac84f4859fb15a845d015e8c82
-os.environ['WANDB_API_KEY'] = 'ca54b3d2066f30ac84f4859fb15a845d015e8c82'
-os.environ['WANDB_DIR'] = '/scratch/jbregman_root/jbregman0/campratt'
-
-
-
+os.environ['WANDB_API_KEY'] = '####################'
+os.environ['WANDB_DIR'] = '####################'
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a network on SZ data')
     parser.add_argument('--fn_config', type=str, required=False, help='Path to the config file', default=None)
-    parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ')
+
+    parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='./data')
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
+    parser.add_argument('--cross_val_id', type=int, required=False, help='Number ID defining how to split the data for cross-validation', default=None)
+    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='./model_example/')
+
+    # Leave fixed
     parser.add_argument('--N_sim', type=int, required=False, help='Number of all-sky simulations maps', default=100)
     parser.add_argument('--N_dim', type=float, required=False, help='Height/Width dimension of images', default=128)
     parser.add_argument('--max_epochs', type=float, required=False, help='Maximum number of epochs to train', default=30)
@@ -40,8 +40,7 @@ def parse_args():
     parser.add_argument('--y_int_low', type=float, required=False, help='Lower bound for intermediate signals', default=30)
     parser.add_argument('--y_int_high', type=float, required=False, help='Upper bound for intermediate signals', default=60)
     parser.add_argument('--N_per_epoch', type=float, required=False, help='Number of samples used for training one epoch', default=None)
-    parser.add_argument('--cross_val_id', type=int, required=False, help='Number ID defining how to split the data for cross-validation', default=None)
-    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='/scratch/jbregman_root/jbregman0/campratt/SZU/model_example/')
+    
     
 
     args = parser.parse_args()
@@ -53,13 +52,15 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # Load the configuration file if it exists
     if args.fn_config is not None:
         config = load_config(args.fn_config)
 
     else:
         config = {}
 
-    # Update config with command line arguments if they don't already exist in the config file or if a config file is not provided
+    # Update config with command line arguments if they don't already exist in the config file 
+    # Or create config if file is not provided
     for key, value in vars(args).items():
         if key not in config.keys():
             config[key] = value
@@ -97,7 +98,11 @@ def main():
 
     ########################################################
     # Define the setup of the cross-validation experiments
-    N_IDs_sim_max = 700*N_sim
+    if N_sim is not None:
+        N_IDs_sim_max = 700*N_sim
+    else:
+        N_IDs_sim_max = len(os.listdir(os.path.join(data_dir,'x/')))
+
     IDs_sim_all = np.arange(0, int(round(N_IDs_sim_max,1)))
 
     # Split into 67/33 train/val
@@ -133,7 +138,7 @@ def main():
     # Initialize the network, optimizer, and model directory
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    Net_train = getattr(networks, model)(model_size=model_size).to(device)
+    Net_train = getattr(utils.networks, model)(model_size=model_size).to(device)
 
 
     if torch.cuda.device_count() > 1:
@@ -149,15 +154,15 @@ def main():
     # First Training
     print('First training: ',model)
     if wandb_on:
-        train_run = wandb.init(project='SZU', entity='campratt')
+        train_run = wandb.init(project='project', entity='username')
         train_run.config.update(config)
         train_run.watch(Net_train, log="all")
     
     ########################################################
     # Set up the data loaders
-    simreal_x_dir = os.path.join(data_dir,'x_simreal/')
-    simreal_y_dir = os.path.join(data_dir,'y_simreal/')
-    simreal_mask_dir = os.path.join(data_dir,'mask_simreal/')
+    simreal_x_dir = os.path.join(data_dir,'x/')
+    simreal_y_dir = os.path.join(data_dir,'y/')
+    simreal_mask_dir = os.path.join(data_dir,'mask/')
 
     transform_train = TransformSZ(N_dim)
 
@@ -171,7 +176,7 @@ def main():
                                                                 batch_size=batch_size, 
                                                                 drop_last=True,
                                                                 shuffle=True, 
-                                                                collate_fn=custom_collate_fn)
+                                                                collate_fn=collate_fn)
     
 
     transform_val = TransformSZ(N_dim,eval=True)
@@ -183,9 +188,9 @@ def main():
                                                                     transform = transform_val,
                                                                     ),
                                                                     batch_size=batch_size, 
-                                                                    drop_last=False,
+                                                                    drop_last=True,
                                                                     shuffle=True, 
-                                                                    collate_fn=custom_collate_fn)
+                                                                    collate_fn=collate_fn)
         
    
 
@@ -217,17 +222,6 @@ def main():
         print("Epoch: "+str(epoch))
 
         
-            
-        
-        print('train=simreal val=simreal')
-        #loss,err_signal_simreal, bias_signal_simreal, err_frac_signal_simreal, bias_frac_signal_simreal,\
-        #    err_weak_simreal, bias_weak_simreal, err_frac_weak_simreal, bias_frac_weak_simreal,\
-        #    err_int_simreal, bias_int_simreal, err_frac_int_simreal, bias_frac_int_simreal,\
-        #            err_strong_simreal, bias_strong_simreal, err_frac_strong_simreal, bias_frac_strong_simreal, \
-        #            var_simreal = \
-        #        train_simreal_eval_simreal(Net_train, train_loader_simreal, val_loader_simreal, \
-        #                            optimizer, epoch, device, alpha, y_sig_start, y_weak_low, y_weak_high, y_int_low, y_int_high, y_strong_low, alpha, clip_norm, WB=train_run)
-        
         results = train_simreal_eval_simreal(Net_train, 
                                               train_loader_simreal, 
                                               val_loader_simreal, 
@@ -239,7 +233,7 @@ def main():
                                               y_weak_low, 
                                               y_weak_high, 
                                               y_int_low, 
-                                              y_int_high, 
+                                              y_int_high,   
                                               y_strong_low, 
                                               clip_norm, 
                                               WB=train_run)

@@ -1,11 +1,11 @@
 import torch
 import numpy as np
-from data_transforms import TransformSZ
-from datasets import EvalDataset
+from utils.data_transforms import TransformSZ
+from utils.datasets import EvalDataset
 import networks
 import os
 import argparse
-from funcs import custom_collate_fn
+from utils.funcs import collate_fn
 
 
 
@@ -13,11 +13,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="PyTorch Hyperparameter Tuning")
     parser.add_argument('--x_data_dir', type=str, required=False, help='Directory to input data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/x_simreal')
     parser.add_argument('--y_data_dir', type=str, required=False, help='Directory to input data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/y_simreal')
-    parser.add_argument('--mask_data_dir', type=str, required=False, help='Directory to input data', default=None)
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
     parser.add_argument('--model_dir', type=str, required=False, help='Directory to saved models', default='/scratch/jbregman_root/jbregman0/campratt/SZU/model_example/')
-    parser.add_argument('--model_epoch', type=int, required=False, help='Specific model epoch', default=None)
+    parser.add_argument('--model_path', type=int, required=False, help='Path to specific model instead of using model_dir', default=None)
     parser.add_argument('--IDs', type=int, required=False, help='IDs of samples', nargs='+', default=[0,1])
     parser.add_argument('--N_dim', type=float, required=False, help='Height/Width dimension of images', default=128)
     parser.add_argument('--output_dir', type=str, required=False, help='Directory to save outputs', default='/nfs/turbo/lsa-jbregman/campratt/SZU/outputs_evaluate/')
@@ -86,12 +85,6 @@ def get_ranks(arr,return_indices=False):
 def main():
     args = parse_args()
 
-    #if args.fn_config is not None:
-    #    config = load_config(args.fn_config)
-#
-    #else:
-    #    config = {}
-
     config = {}
     for key, value in vars(args).items():
         #if key not in config.keys():
@@ -110,8 +103,7 @@ def main():
     IDs = config['IDs']
     x_data_dir = config['x_data_dir']
     y_data_dir = config['y_data_dir']
-    mask_data_dir = config['mask_data_dir']
-    model_epoch = config['model_epoch']
+    model_path = config['model_path']
 
     print('output_dir: %s'%output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -124,22 +116,22 @@ def main():
 
     
     # Find the best model
-    strong_bias = np.genfromtxt(os.path.join(model_dir, 'bias_strong_simreal_val.txt'))
-    strong_loss = np.genfromtxt(os.path.join(model_dir, 'err_strong_simreal_val.txt'))
-    int_bias = np.genfromtxt(os.path.join(model_dir, 'bias_int_simreal_val.txt'))
-    int_loss = np.genfromtxt(os.path.join(model_dir, 'err_int_simreal_val.txt'))
-    weak_bias = np.genfromtxt(os.path.join(model_dir, 'bias_weak_simreal_val.txt'))
-    weak_loss = np.genfromtxt(os.path.join(model_dir, 'err_weak_simreal_val.txt'))
+    if model_path is None and model_dir is not None:
+        strong_bias = np.genfromtxt(os.path.join(model_dir, 'bias_strong_simreal_val.txt'))
+        strong_loss = np.genfromtxt(os.path.join(model_dir, 'err_strong_simreal_val.txt'))
+        int_bias = np.genfromtxt(os.path.join(model_dir, 'bias_int_simreal_val.txt'))
+        int_loss = np.genfromtxt(os.path.join(model_dir, 'err_int_simreal_val.txt'))
+        weak_bias = np.genfromtxt(os.path.join(model_dir, 'bias_weak_simreal_val.txt'))
+        weak_loss = np.genfromtxt(os.path.join(model_dir, 'err_weak_simreal_val.txt'))
 
+        rank_loss = get_ranks(strong_loss) + get_ranks(int_loss) + get_ranks(weak_loss) + get_ranks(abs(strong_bias)) + get_ranks(abs(int_bias)) + get_ranks(abs(weak_bias))
 
-    rank_loss = get_ranks(strong_loss) + get_ranks(int_loss) + get_ranks(weak_loss) + get_ranks(abs(strong_bias)) + get_ranks(abs(int_bias)) + get_ranks(abs(weak_bias))
+        epoch_best = int(np.argmin(rank_loss) + 1)
+        print('epoch best = %i'%epoch_best)
+        model_path = os.path.join(model_dir,f'epoch={epoch_best}.pth')
+    else:
+        model_path = model_path
 
-    
-
-    
-    arg_best = int(np.argmin(rank_loss) + 1)
-    print('argbest = %i'%arg_best)
-    model_best = os.path.join(model_dir,f'epoch={arg_best}.pth')
 
 
     # Transoform and load the data
@@ -153,21 +145,15 @@ def main():
                                                                 drop_last=False,
                                                                 shuffle=False,
                                                                 pin_memory=True, 
-                                                                collate_fn=custom_collate_fn)
+                                                                collate_fn=collate_fn)
     
 
     
 
     
     
-    for idx, (ID, x, y, mask) in enumerate(infer_loader):
-        
-        eval_map(Net, (x, y, mask), model_best, device, output_dir, ID=ID)
-        
-
-    
-    
-
+    for _, (ID, x, y, mask) in enumerate(infer_loader):
+        eval_map(Net, (x, y, mask), model_path, device, output_dir, ID=ID)
         
 
 

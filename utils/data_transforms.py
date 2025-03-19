@@ -3,8 +3,8 @@ from torchvision import transforms
 import numpy as np
 
 
-freq_norms = np.genfromtxt('/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/freq_norms_PR4.txt').T
-sz_norms = np.genfromtxt('/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/sz_norms.txt')
+freq_norms = np.genfromtxt('./freq_norms_PR4.txt').T
+sz_norms = np.genfromtxt('./sz_norms.txt')
 
 
 

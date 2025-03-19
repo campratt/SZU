@@ -2,7 +2,6 @@ import torch
 from torch import nn
 import numpy as np
 import torch.nn.functional as F
-from losses import Signal_Loss
 import json
 
 
@@ -256,36 +255,25 @@ def load_config(fname):
         config = json.load(json_file)
     return config
 
-def custom_collate_fn(batch):
-    """
-    Custom collate function to handle cases where 'z' might be None.
-    """
+def collate_fn(batch):
+
     # Separate x, y, and z from the batch
     ID_batch = torch.tensor([item[0] for item in batch])
     x_batch = [item[1] for item in batch]
     y_batch = [item[2] for item in batch]
     z_batch = [item[3] for item in batch]
     
-    # Stack x and y into tensors
-    
     x_batch = torch.stack(x_batch)
-    #y_batch = torch.stack(y_batch)
     
     # Handle z
     if any(z is not None for z in z_batch):
-        # Replace None with a placeholder (e.g., a zero tensor or any appropriate default)
-        #z_batch = [torch.zeros_like(x_batch[0]) if z is None else z for z in z_batch]
         z_batch = torch.stack(z_batch)
     else:
-        # If all z are None, return None
         z_batch = None
 
     if any(y is not None for y in y_batch):
-        # Replace None with a placeholder (e.g., a zero tensor or any appropriate default)
-        #z_batch = [torch.zeros_like(x_batch[0]) if z is None else z for z in z_batch]
         y_batch = torch.stack(y_batch)
     else:
-        # If all z are None, return None
         y_batch = None
     
     #print(x_batch.size(),y_batch.size(),z_batch.size())
@@ -330,4 +318,43 @@ def upscale_tensors(tensor_list):
         scaled_tensors.append(scaled_tensor)
     
     return scaled_tensors
+
+
+class Signal_Loss(nn.Module):
+
+    def __init__(self, y_low=10,y_high=None):
+        super(Signal_Loss, self).__init__()
+        self.y_low = y_low
+        self.y_high = y_high
+
+    def forward(self, y_pred, y_true):
+        
+        
+        y_pred = torch.flatten(y_pred,start_dim=0)
+        y_true = torch.flatten(y_true,start_dim=0)
+
+        
+        
+        if self.y_high is None:
+            where_signal = (y_true > self.y_low)
+        else:
+            where_signal = (y_true > self.y_low) & (y_true<self.y_high)
+
+        y_pred = y_pred[where_signal]
+        y_true = y_true[where_signal]
+
+
+        errs_init = y_pred - y_true
+
+        
+        biases_signal = errs_init.mean()
+        errs_signal = torch.abs(errs_init).mean()
+
+        biases_frac_signal = (errs_init/y_true).mean()
+        errs_frac_signal = torch.abs(errs_init/y_true).mean()
+
+        loss = errs_signal
+        
+
+        return loss, errs_signal, biases_signal, errs_frac_signal, biases_frac_signal
 
