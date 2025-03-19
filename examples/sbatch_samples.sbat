@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=job0
+#SBATCH --output=/home/campratt/SZU/output_samples.out
+#SBATCH --time=00-00:10:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=40g
+#SBATCH --partition=debug
+#SBATCH --mail-type=FAIL,END
+#SBATCH --account=jbregman1
+
+#source activate /home/campratt/.bashrc
+#mamba activate dino
+
+module load tensorflow
+
+python3 /home/campratt/SZU/generate_train_test_samples.py --data_dir /nfs/turbo/lsa-jbregman/campratt/SZU/fullsky_data --map_id 00000 --output_dir /nfs/turbo/lsa-jbregman/campratt/SZU/train_test_data --coords_path /nfs/turbo/lsa-jbregman/campratt/SZU/fullsky_data/coordinates.txt --mask_path /nfs/turbo/lsa-jbregman/campratt/SZU/fullsky_data/mask.fits --cores 4

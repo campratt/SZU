@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --job-name=job0
+#SBATCH --output=/home/campratt/SZU/output.out
+#SBATCH --time=00-00:10:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --gpus=2
+#SBATCH --mem=90g
+#SBATCH --partition=spgpu
+#SBATCH --mail-type=FAIL,END
+#SBATCH --account=jbregman1
+
+source activate /home/campratt/.bashrc
+mamba activate dino
+
+python3 /home/campratt/SZU/main_eval_sz.py 
