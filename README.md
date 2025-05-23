@@ -36,7 +36,7 @@ python3 main_train_szu.py --fn_config config_example.json
 
 ## Model evaluation instructions
 - y_data_dir can be set to None when performing inference on the real sky, or set to the path for labeled simulated data
-- Pretrained weights for the small model are provided as "small_y0=60_weights.pth
+- Pretrained weights for the small model are provided as "small_y0=60_weights.pth"
 
 ```
 python3 main_eval_szu.py --x_data_dir ./x_eval --y_data_dir ./y_eval --model NestedUNet3D --model_size small --model_dir ./trained_models --IDs 0 1 --output_dir ./model_outputs
