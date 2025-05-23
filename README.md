@@ -16,6 +16,8 @@ There are three parts to this pipeline:
   ```
 ### Inject/superimpose the SZ signal
 - Use the results from Han et al. (2021) saved in "sz_dir" and inject them into the Planck frequency data in "freq_dir"
+- Smooths the Compton-y maps with a Gaussian kernel of FWHM = 10 arcminutes, which are used as labeled data in supervised learning.
+- Also smooths the SZ signals injected into each frequency map using the given resolution of each instrument.
 ```
 python3 inject_sz_signal.py --freq_dir ./freq_dir --sz_dir ./sz_dir --ID 00000 --output_dir ./fullsky_data --cores 8
 ```
