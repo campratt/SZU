@@ -16,6 +16,7 @@ There are three parts to this pipeline:
   ```
 ### Inject/superimpose the SZ signal
 ```
+- Use the results from Han et al. (2021) saved in "sz_dir" and inject them into the Planck frequency data in "freq_dir"
 python3 inject_sz_signal.py --freq_dir ./freq_dir --sz_dir ./sz_dir --ID 00000 --output_dir ./fullsky_data --cores 8
 ```
 ### Generate cutouts for training/testing machine learning model
