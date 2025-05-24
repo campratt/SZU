@@ -1,10 +1,11 @@
 import torch
 from torchvision import transforms
 import numpy as np
+import os
 
-
-freq_norms = np.genfromtxt('./freq_norms_PR4.txt').T
-sz_norms = np.genfromtxt('./sz_norms.txt')
+module_dir = os.path.dirname(__file__)
+freq_norms = np.genfromtxt(os.path.join(module_dir,'freq_norms_PR4.txt')).T
+sz_norms = np.genfromtxt(os.path.join(module_dir,'sz_norms.txt'))
 
 
 
