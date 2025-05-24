@@ -17,13 +17,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a network on SZ data')
     parser.add_argument('--fn_config', type=str, required=False, help='Path to the config file', default=None)
 
+    
+    # Use if fn_config is not provided
     parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='./data')
+    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='./model_example/')
+    
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
     parser.add_argument('--cross_val_id', type=int, required=False, help='Number ID defining how to split the data for cross-validation', default=None)
-    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='./model_example/')
-
-    # Leave fixed
     parser.add_argument('--N_sim', type=int, required=False, help='Number of all-sky simulations maps', default=100)
     parser.add_argument('--N_dim', type=float, required=False, help='Height/Width dimension of images', default=128)
     parser.add_argument('--max_epochs', type=float, required=False, help='Maximum number of epochs to train', default=30)
@@ -119,7 +120,7 @@ def main():
             i_end = indices[i+1]
             inds_val.append(np.arange(i_start,i_end))
             inds_train.append(inds_all[~np.isin(inds_all,inds_val[i])])
-        return [np.array(inds_train), np.array(inds_val)]
+        return [inds_train, inds_val]
 
     inds_train_sim, inds_val_sim = get_indices(IDs_sim_all, n_parts)
 
@@ -130,7 +131,7 @@ def main():
     else:
         cross_val_id = int(cross_val_id)
         
-    IDs_sim_train, IDs_sim_val = inds_train_sim[cross_val_id], inds_val_sim[cross_val_id]
+    IDs_sim_train, IDs_sim_val = np.array(inds_train_sim[cross_val_id],dtype=int), np.array(inds_val_sim[cross_val_id],dtype=int)
 
     
     
@@ -176,7 +177,7 @@ def main():
                                                                 batch_size=batch_size, 
                                                                 drop_last=True,
                                                                 shuffle=True, 
-                                                                collate_fn=collate_fn)
+                                                                )
     
 
     transform_val = TransformSZ(N_dim,eval=True)
@@ -190,7 +191,7 @@ def main():
                                                                     batch_size=batch_size, 
                                                                     drop_last=True,
                                                                     shuffle=True, 
-                                                                    collate_fn=collate_fn)
+                                                                    )
         
    
 
