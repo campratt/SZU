@@ -1,5 +1,9 @@
-{
+    {
     "fn_config": "/home/campratt/SZU/config_example.json",
+    "x_data_dir": "/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/x_simreal",
+    "y_data_dir": "/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/y_simreal",
+    "mask_data_dir": "/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/mask_simreal",
+    "model_dir":"/nfs/turbo/lsa-jbregman/campratt/test_code/SZU/models",
     "model": "NestedUNet3D",
     "batch_size": 128,
     "N_sim": 100,
@@ -20,3 +24,4 @@
     "cross_val_id": 0,
     "models_dir": "/scratch/jbregman_root/jbregman0/campratt/SZU/model_example/"
 }
+
