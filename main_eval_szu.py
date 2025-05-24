@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from utils.data_transforms import TransformSZ
 from utils.datasets import EvalDataset
-import networks
+from utils import networks
 import os
 import argparse
 from utils.funcs import collate_fn
@@ -11,15 +11,17 @@ from utils.funcs import collate_fn
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PyTorch Hyperparameter Tuning")
-    parser.add_argument('--x_data_dir', type=str, required=False, help='Directory to input data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/x_simreal')
-    parser.add_argument('--y_data_dir', type=str, required=False, help='Directory to input data', default='/nfs/turbo/lsa-jbregman/campratt/DANN_SZ/y_simreal')
+    parser.add_argument('--x_data_dir', type=str, required=False, help='Directory to input data', default='./data/x')
+    parser.add_argument('--y_data_dir', type=str, required=False, help='Directory to input data', default='./data/y')
+    parser.add_argument('--model_dir', type=str, required=False, help='Directory to saved models', default='./models')
+    parser.add_argument('--model_path', type=int, required=False, help='Path to specific model instead of using model_dir', default=None)
+    
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
-    parser.add_argument('--model_dir', type=str, required=False, help='Directory to saved models', default='/scratch/jbregman_root/jbregman0/campratt/SZU/model_example/')
-    parser.add_argument('--model_path', type=int, required=False, help='Path to specific model instead of using model_dir', default=None)
+    
     parser.add_argument('--IDs', type=int, required=False, help='IDs of samples', nargs='+', default=[0,1])
     parser.add_argument('--N_dim', type=float, required=False, help='Height/Width dimension of images', default=128)
-    parser.add_argument('--output_dir', type=str, required=False, help='Directory to save outputs', default='/nfs/turbo/lsa-jbregman/campratt/SZU/outputs_evaluate/')
+    parser.add_argument('--output_dir', type=str, required=False, help='Directory to save outputs', default='./outputs_evaluate')
     
     
 
