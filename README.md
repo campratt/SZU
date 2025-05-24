@@ -32,7 +32,7 @@ python3 generate_train_test_samples.py --data_dir ./fullsky_data --ID 00000 --ou
 ```
 
 ## Model training instructions
-- The "data_dir" argument is a directory that should contain "x/", "y/", and "mask/" subdirectories. 
+- Create a "config.json" or apply the necessary arguments.
 ```
 python3 main_train_szu.py --fn_config config_example.json
 ```
@@ -43,6 +43,7 @@ python3 main_train_szu.py --fn_config config_example.json
 
 ```
 python3 main_eval_szu.py --x_data_dir ./x_eval --y_data_dir ./y_eval --model NestedUNet3D --model_size small --model_dir ./trained_models --IDs 0 1 --output_dir ./model_outputs
+```
 
 
 
