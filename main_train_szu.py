@@ -19,8 +19,10 @@ def parse_args():
 
     
     # Use if fn_config is not provided
-    parser.add_argument('--data_dir', type=str, required=False, help='Directory to data', default='./data')
-    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='./model_example/')
+    parser.add_argument('--x_data_dir', type=str, required=False, help='Directory to input data', default='./data/x')
+    parser.add_argument('--y_data_dir', type=str, required=False, help='Directory to labeled data', default='./data/y')
+    parser.add_argument('--mask_data_dir', type=str, required=False, help='Directory to mask data', default='./data/mask')
+    parser.add_argument('--models_dir', type=str, required=False, help='Directory to save models', default='./model_example')
     
     parser.add_argument('--model', type=str, required=False, help='Network architecture', default='NestedUNet3D')
     parser.add_argument('--model_size', type=str, required=False, help='Network architecture size', default='small')
@@ -91,7 +93,9 @@ def main():
     y_weak_high = config['y_weak_high']
     y_int_low = config['y_int_low']
     y_int_high = config['y_int_high']
-    data_dir = config['data_dir']
+    x_data_dir = config['x_data_dir']
+    y_data_dir = config['y_data_dir']
+    mask_data_dir = config['mask_data_dir']
     
 
 
@@ -102,7 +106,7 @@ def main():
     if N_sim is not None:
         N_IDs_sim_max = 700*N_sim
     else:
-        N_IDs_sim_max = len(os.listdir(os.path.join(data_dir,'x/')))
+        N_IDs_sim_max = len(os.listdir(x_data_dir))
 
     IDs_sim_all = np.arange(0, int(round(N_IDs_sim_max,1)))
 
@@ -161,16 +165,12 @@ def main():
     
     ########################################################
     # Set up the data loaders
-    simreal_x_dir = os.path.join(data_dir,'x/')
-    simreal_y_dir = os.path.join(data_dir,'y/')
-    simreal_mask_dir = os.path.join(data_dir,'mask/')
-
     transform_train = TransformSZ(N_dim)
 
     train_loader_simreal = torch.utils.data.DataLoader(TrainDataset(IDs = IDs_sim_train, 
-                                                                x_dir = simreal_x_dir,
-                                                                y_dir = simreal_y_dir,
-                                                                mask_dir = simreal_mask_dir,
+                                                                x_dir = x_data_dir,
+                                                                y_dir = y_data_dir,
+                                                                mask_dir = mask_data_dir,
                                                                 N_per_epoch=N_per_epoch,
                                                                 transform = transform_train
                                                                 ),
@@ -182,9 +182,9 @@ def main():
 
     transform_val = TransformSZ(N_dim,eval=True)
     val_loader_simreal = torch.utils.data.DataLoader(TrainDataset(IDs = IDs_sim_val, 
-                                                                    x_dir = simreal_x_dir,
-                                                                    y_dir = simreal_y_dir,
-                                                                    mask_dir = simreal_mask_dir,
+                                                                    x_dir = x_data_dir,
+                                                                    y_dir = y_data_dir,
+                                                                    mask_dir = mask_data_dir,
                                                                     N_per_epoch=None,
                                                                     transform = transform_val,
                                                                     ),
