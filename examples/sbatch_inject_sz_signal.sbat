@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=inject_sz
+#SBATCH --output=/home/campratt/test_code/SZU/output_inject_sz_signal.out
+#SBATCH --time=00-12:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --mem=80g
+#SBATCH --partition=standard
+#SBATCH --mail-type=FAIL,END
+#SBATCH --account=jbregman1
+
+
+python3 /home/campratt/test_code/SZU/inject_sz_signal.py --freq_dir /home/campratt/MODULE_ILC/bin/FREQ_PR4_WMAP --sz_dir /home/campratt/test_code/SZU/Han21_output --ID 00000 --output_dir /home/campratt/test_code/SZU/fullsky_data --cores 16
+

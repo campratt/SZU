@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=get_Han21
+#SBATCH --output=/home/campratt/test_code/SZU/output_get_Han21_samples.out
+#SBATCH --time=00-00:10:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=40g
+#SBATCH --partition=debug
+#SBATCH --mail-type=FAIL,END
+#SBATCH --account=jbregman1
+
+
+
+python3 /home/campratt/test_code/SZU/get_Han21.py --output_dir /home/campratt/test_code/SZU/Han21_output --ID 00000

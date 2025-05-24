@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=gen_samples
+#SBATCH --output=/home/campratt/test_code/SZU/output_gen_samples.out
+#SBATCH --time=00-02:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=40g
+#SBATCH --partition=debug
+#SBATCH --mail-type=FAIL,END
+#SBATCH --account=jbregman1
+
+
+python3 /home/campratt/test_code/SZU/generate_train_test_samples.py --data_dir /nfs/turbo/lsa-jbregman/campratt/SZU/fullsky_data --ID 00000 --output_dir /nfs/turbo/lsa-jbregman/campratt/test_code/SZU/train_test_data --coords_path /home/campratt/test_code/SZU/utils/coordinates.txt --mask_path /home/campratt/test_code/SZU/mask.fits --cores 4
