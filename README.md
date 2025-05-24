@@ -26,7 +26,7 @@ python3 inject_sz_signal.py --freq_dir ./freq_dir --sz_dir ./sz_dir --ID 00000 -
 - Cutouts are 512x512 with 2 arcminute pixel resolution.
 - Decompress the mask file in "utils/mask.fits.gz". The fits file masks known galaxy clusters.
 - Centers of cutouts are defined by the coordinate list. The code can also be used to create an evaluation dataset using a custom coordinate list. An example is provided in "utils/coordinates.txt".
-- Training data are created inside of "data_dir/" inside the subdirectories of "x/", "y/", and "mask/".
+- Training data are created inside of "data_dir/" inside the subdirectories of "x/", "y/", and "mask/". These paths will be passed as arguments into the training step.
 ```
 python3 generate_train_test_samples.py --data_dir ./fullsky_data --ID 00000 --output_dir ./train_test_data --coords_path ./utils/coordinates.txt --mask_path ./utils/mask.fits --cores 8
 ```
